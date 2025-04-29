@@ -2,9 +2,9 @@
 
 Log meals, track macros, and smash your nutrition goals—right from the browser.
 
-![Logo](src/images/nutrilogo.png)
-
----
+<p align="center_right">
+  <img src="src/images/nutrilogo.png" width="150">
+</p>
 
 ## Table of Contents
 1. [Features](#features)
