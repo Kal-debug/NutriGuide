@@ -1,0 +1,560 @@
+<template>
+  <div
+    class="min-h-screen flex
+           bg-gray-50 dark:bg-gray-900
+           transition-colors duration-300"
+  >
+    <!-- SIDEBAR - Same as before -->
+    <aside
+      class="w-56 bg-white dark:bg-gray-800
+             text-gray-900 dark:text-gray-100
+             p-6 shadow-lg flex flex-col"
+    >
+      <!-- Dark Mode Toggle -->
+      <div class="flex justify-end">
+        <button
+          @click="toggleDarkMode"
+          aria-label="Toggle dark mode"
+          class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+        >
+          <!-- Sun (shown in light mode) -->
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-5 w-5 text-gray-700 dark:hidden"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"
+            />
+          </svg>
+          <!-- Moon (shown in dark mode) -->
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-5 w-5 text-gray-300 hidden dark:block"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"
+            />
+          </svg>
+        </button>
+      </div>
+
+      <h2 class="text-xl font-bold fade-slide-up">Menu</h2>
+
+      <router-link
+        to="/dashboard"
+        class="block px-2 py-1 mt-4 rounded
+               hover:bg-gray-100 dark:hover:bg-gray-700
+               fade-slide-up delay-150"
+      >
+        Dashboard
+      </router-link>
+
+      <router-link
+        to="/meals"
+        class="block px-2 py-1 mt-2 rounded
+               hover:bg-gray-100 dark:hover:bg-gray-700
+               fade-slide-up delay-300"
+      >
+        Manage Meals
+      </router-link>
+
+      <router-link
+        to="/profile"
+        class="block px-2 py-1 mt-2 rounded
+               bg-gray-100 dark:bg-gray-700
+               fade-slide-up delay-300"
+      >
+        Profile
+      </router-link>
+      
+      <button
+        @click="logout"
+        class="w-full mt-auto py-2
+               bg-gradient-to-r from-red-400 to-red-600
+               text-white font-semibold rounded-lg
+               hover:shadow-lg transition-all duration-300
+               fade-slide-up delay-450"
+      >
+        Log Out
+      </button>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="flex-1 p-8">
+      <!-- Calculation animation overlay -->
+      <div 
+        v-if="isCalculating" 
+        class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+      >
+        <div class="bg-white dark:bg-gray-800 p-8 rounded-lg shadow-xl text-center max-w-md">
+          <div class="flex justify-center mb-4">
+            <svg class="animate-spin h-12 w-12 text-green-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+          </div>
+          <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-2">
+            Calculating Nutrition Targets
+          </h3>
+          <p class="text-gray-600 dark:text-gray-300">
+            {{ calculationStep }}
+          </p>
+        </div>
+      </div>
+
+      <h1
+        class="text-3xl font-bold mb-6
+               text-gray-900 dark:text-white
+               fade-slide-up"
+      >
+        My Profile
+      </h1>
+
+      <form 
+        @submit.prevent="onSubmit" 
+        class="max-w-md mx-auto space-y-6"
+      >
+        <!-- Age -->
+        <div class="fade-slide-up delay-150">
+          <label for="age" class="block font-medium mb-1 text-gray-800 dark:text-gray-200">Age</label>
+          <input
+            id="age"
+            v-model.number="form.age"
+            type="number"
+            min="0"
+            required
+            class="w-full border p-2 rounded focus:ring-2 focus:ring-green-500 
+                   transition-colors bg-gray-100 dark:bg-gray-700 
+                   text-gray-900 dark:text-gray-100"
+          />
+        </div>
+
+        <!-- Sex -->
+        <div class="fade-slide-up delay-150">
+          <label for="sex" class="block font-medium mb-1 text-gray-800 dark:text-gray-200">Sex</label>
+          <select
+            id="sex"
+            v-model="form.sex"
+            required
+            class="w-full border p-2 rounded focus:ring-2 focus:ring-green-500 
+                   transition-colors bg-gray-100 dark:bg-gray-700 
+                   text-gray-900 dark:text-gray-100"
+          >
+            <option>male</option>
+            <option>female</option>
+          </select>
+        </div>
+
+        <!-- Height & Weight -->
+        <div class="grid grid-cols-2 gap-4 fade-slide-up delay-300">
+          <div>
+            <label for="height" class="block font-medium mb-1 text-gray-800 dark:text-gray-200">Height (cm)</label>
+            <input
+              id="height"
+              v-model.number="form.height_cm"
+              type="number"
+              min="0"
+              required
+              class="w-full border p-2 rounded focus:ring-2 focus:ring-green-500 
+                     transition-colors bg-gray-100 dark:bg-gray-700 
+                     text-gray-900 dark:text-gray-100"
+            />
+          </div>
+          <div>
+            <label for="weight" class="block font-medium mb-1 text-gray-800 dark:text-gray-200">Weight (kg)</label>
+            <input
+              id="weight"
+              v-model.number="form.weight_kg"
+              type="number"
+              min="0"
+              required
+              class="w-full border p-2 rounded focus:ring-2 focus:ring-green-500 
+                     transition-colors bg-gray-100 dark:bg-gray-700 
+                     text-gray-900 dark:text-gray-100"
+            />
+          </div>
+        </div>
+
+        <!-- Activity Level (new) -->
+        <div class="fade-slide-up delay-300">
+          <label for="activity" class="block font-medium mb-1 text-gray-800 dark:text-gray-200">Activity Level</label>
+          <select
+            id="activity"
+            v-model="form.activity_level"
+            required
+            class="w-full border p-2 rounded focus:ring-2 focus:ring-green-500 
+                   transition-colors bg-gray-100 dark:bg-gray-700 
+                   text-gray-900 dark:text-gray-100"
+          >
+            <option value="sedentary">Sedentary (little or no exercise)</option>
+            <option value="light">Lightly active (light exercise 1-3 days/week)</option>
+            <option value="moderate">Moderately active (moderate exercise 3-5 days/week)</option>
+            <option value="active">Very active (hard exercise 6-7 days/week)</option>
+            <option value="veryActive">Extremely active (very hard exercise, physical job)</option>
+          </select>
+        </div>
+
+        <!-- Advanced Metrics Toggle -->
+        <button
+          type="button"
+          @click="showAdv = !showAdv"
+          class="text-green-600 hover:underline fade-slide-up delay-300"
+        >
+          {{ showAdv ? 'Hide' : 'Show' }} Advanced Metrics
+        </button>
+
+        <!-- Advanced Metrics -->
+        <div v-if="showAdv" class="space-y-4 fade-slide-up delay-300">
+          <div>
+            <label for="bodyFat" class="block font-medium mb-1 text-gray-800 dark:text-gray-200">Body Fat %</label>
+            <input
+              id="bodyFat"
+              v-model.number="form.body_fat_pct"
+              type="number"
+              min="0"
+              max="100"
+              class="w-full border p-2 rounded focus:ring-2 focus:ring-green-500 
+                     transition-colors bg-gray-100 dark:bg-gray-700 
+                     text-gray-900 dark:text-gray-100"
+            />
+          </div>
+          <div>
+            <label for="rhr" class="block font-medium mb-1 text-gray-800 dark:text-gray-200">Resting HR (bpm)</label>
+            <input
+              id="rhr"
+              v-model.number="form.rhr_bpm"
+              type="number"
+              min="0"
+              class="w-full border p-2 rounded focus:ring-2 focus:ring-green-500 
+                     transition-colors bg-gray-100 dark:bg-gray-700 
+                     text-gray-900 dark:text-gray-100"
+            />
+          </div>
+        </div>
+
+        <!-- Goal -->
+        <div class="fade-slide-up delay-300">
+          <label for="goal" class="block font-medium mb-1 text-gray-800 dark:text-gray-200">Goal</label>
+          <select
+            id="goal"
+            v-model="form.goal"
+            required
+            class="w-full border p-2 rounded focus:ring-2 focus:ring-green-500 
+                   transition-colors bg-gray-100 dark:bg-gray-700 
+                   text-gray-900 dark:text-gray-100"
+          >
+            <option value="loss">Weight Loss</option>
+            <option value="maintain">Maintenance</option>
+            <option value="gain">Weight Gain</option>
+          </select>
+        </div>
+
+        <!-- Consent -->
+        <div class="flex items-center space-x-2 fade-slide-up delay-450">
+          <input
+            id="consent"
+            type="checkbox"
+            v-model="form.consent"
+            required
+            class="form-checkbox h-5 w-5 text-green-600 transition duration-150 ease-in-out"
+          />
+          <label for="consent" class="text-gray-800 dark:text-gray-200">
+            I consent to storing my biometric data
+          </label>
+        </div>
+
+        <!-- Status message if there's an error -->
+        <div v-if="statusMessage" 
+             :class="[
+               'text-center p-2 rounded fade-slide-up delay-450',
+               statusType === 'error' ? 'bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-200' : 
+               'bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-200'
+             ]">
+          {{ statusMessage }}
+        </div>
+
+        <!-- Submit -->
+        <button
+          type="submit"
+          :disabled="isSubmitting"
+          class="w-full py-3 
+                 bg-gradient-to-r from-green-400 to-green-600 dark:from-green-500 dark:to-green-700 
+                 text-white font-semibold rounded-lg 
+                 hover:shadow-lg transition-all duration-300
+                 fade-slide-up delay-450"
+        >
+          {{ isSubmitting ? 'Saving...' : 'Save Profile' }}
+        </button>
+      </form>
+    </main>
+  </div>
+</template>
+
+<script setup>
+import { reactive, ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+import axios from 'axios'
+import { calculateNutritionTargets } from '../utils/nutritionCalculator'
+
+/** Dark-mode logic **/
+const isDarkMode = ref(false)
+const initDarkMode = () => {
+  const saved = localStorage.getItem('nutriguide-dark-mode')
+  const prefers = window.matchMedia('(prefers-color-scheme: dark)').matches
+  isDarkMode.value = saved === 'true' || (saved === null && prefers)
+  applyDarkMode()
+}
+const applyDarkMode = () => {
+  document.documentElement.classList.toggle('dark', isDarkMode.value)
+}
+const toggleDarkMode = () => {
+  isDarkMode.value = !isDarkMode.value
+  localStorage.setItem('nutriguide-dark-mode', isDarkMode.value)
+  applyDarkMode()
+}
+
+/** Router & Auth **/
+const router = useRouter()
+const token = localStorage.getItem('authToken')
+if (!token) router.push('/login')
+const hdrs = { headers: { Authorization: `Bearer ${token}` } }
+
+/** Form state **/
+const form = reactive({
+  age: null,
+  sex: 'male',
+  height_cm: null,
+  weight_kg: null,
+  body_fat_pct: null,
+  rhr_bpm: null,
+  activity_level: 'moderate', // Default activity level
+  goal: 'maintain',
+  consent: false
+})
+const showAdv = ref(false)
+const isSubmitting = ref(false)
+const statusMessage = ref('')
+const statusType = ref('error')
+
+// New calculation state
+const isCalculating = ref(false)
+const calculationStep = ref('')
+
+/** Load existing profile **/
+async function loadProfile() {
+  try {
+    const { data } = await axios.get('http://localhost:3000/profile', hdrs)
+    console.log('Profile data loaded:', data) // Debug logging
+    
+    if (data && Object.keys(data).length) {
+      Object.assign(form, data)
+      form.consent = true
+      
+      // Set default activity level if not present
+      if (!form.activity_level) {
+        form.activity_level = 'moderate'
+      }
+    } else {
+      console.log('No existing profile data found')
+    }
+  } catch (err) {
+    console.error('Failed to load profile', err)
+    if (err.response) {
+      console.error('Response status:', err.response.status)
+      console.error('Response data:', err.response.data)
+    }
+    if (err.response?.status === 401) {
+      statusMessage.value = 'Session expired. Please log in again.'
+      statusType.value = 'error'
+      router.push('/login')
+    }
+  }
+}
+
+/**
+ * Perform nutrition calculations with animation
+ */
+async function calculateNutrition(profileData) {
+  isCalculating.value = true
+  
+  try {
+    // Simulate step calculations with delays to show the animation
+    calculationStep.value = 'Calculating Basal Metabolic Rate (BMR)...'
+    await new Promise(resolve => setTimeout(resolve, 700))
+    
+    calculationStep.value = 'Calculating Total Daily Energy Expenditure (TDEE)...'
+    await new Promise(resolve => setTimeout(resolve, 700))
+    
+    calculationStep.value = 'Determining nutrition targets based on your goals...'
+    await new Promise(resolve => setTimeout(resolve, 700))
+    
+    // Actually calculate the nutrition targets
+    const nutritionTargets = calculateNutritionTargets(
+      profileData, 
+      profileData.activity_level
+    )
+    
+    calculationStep.value = 'Finalizing your personalized plan...'
+    await new Promise(resolve => setTimeout(resolve, 500))
+    
+    // Store the nutrition targets for use in the dashboard
+    localStorage.setItem('nutritionTargets', JSON.stringify(nutritionTargets))
+    
+    return nutritionTargets
+  } finally {
+    isCalculating.value = false
+  }
+}
+
+async function onSubmit() {
+  // Reset status
+  statusMessage.value = ''
+  
+  if (!form.consent) {
+    statusMessage.value = 'You must consent before saving.'
+    statusType.value = 'error'
+    return
+  }
+
+  // Enhanced validation
+  const validationErrors = []
+  if (!form.age || form.age <= 0) validationErrors.push('Age must be positive')
+  if (!form.height_cm || form.height_cm <= 0) validationErrors.push('Height must be positive')
+  if (!form.weight_kg || form.weight_kg <= 0) validationErrors.push('Weight must be positive')
+  
+  if (validationErrors.length > 0) {
+    statusMessage.value = validationErrors.join(', ')
+    statusType.value = 'error'
+    return
+  }
+  
+  isSubmitting.value = true
+  
+  try {
+    // Make sure numbers are actually numbers
+    const formData = {
+      ...form,
+      age: Number(form.age),
+      height_cm: Number(form.height_cm),
+      weight_kg: Number(form.weight_kg),
+      body_fat_pct: form.body_fat_pct ? Number(form.body_fat_pct) : null,
+      rhr_bpm: form.rhr_bpm ? Number(form.rhr_bpm) : null
+    }
+    
+    console.log('Sending profile data:', formData)
+    
+    // Check for token
+    if (!token) {
+      throw new Error('Authentication token missing')
+    }
+    
+    const response = await axios.post('http://localhost:3000/profile', formData, hdrs)
+    
+    console.log('Profile saved successfully:', response.data)
+    
+    statusMessage.value = 'Profile saved successfully!'
+    statusType.value = 'success' 
+    
+    // Save a local copy in localStorage as backup
+    localStorage.setItem('userProfile', JSON.stringify(formData))
+    
+    // Calculate nutrition targets with animation
+    await calculateNutrition(formData)
+    
+    // Short delay before redirecting
+    setTimeout(() => {
+      router.push('/dashboard')
+    }, 500)
+  } catch (err) {
+    console.error('Failed to save profile', err)
+    
+    if (err.response) {
+      console.error('Response status:', err.response.status)
+      console.error('Response data:', err.response.data)
+    }
+    
+    // Specific error handling based on common issues
+    if (err.message === 'Authentication token missing') {
+      statusMessage.value = 'You need to log in again'
+      setTimeout(() => router.push('/login'), 1500)
+    } else if (err.response?.status === 401) {
+      statusMessage.value = 'Session expired. Please log in again.'
+      setTimeout(() => router.push('/login'), 1500)
+    } else if (err.response?.status === 400) {
+      statusMessage.value = 'Invalid data. Please check your inputs.'
+    } else if (err.message.includes('Network Error')) {
+      statusMessage.value = 'Network error. Please check your connection to the server.'
+    } else {
+      statusMessage.value = err.response?.data?.message || 'Save failed. Please try again.'
+    }
+    
+    statusType.value = 'error'
+  } finally {
+    isSubmitting.value = false
+  }
+}
+
+// Add a function to check if API server is reachable
+async function checkServerConnection() {
+  try {
+    await axios.get('http://localhost:3000/health')
+    return true
+  } catch (err) {
+    console.error('API server connection error:', err)
+    statusMessage.value = 'Cannot connect to server. Is it running?'
+    statusType.value = 'error'
+    return false
+  }
+}
+
+// Update onMounted to include connection check
+onMounted(async () => {
+  initDarkMode()
+  
+  // Try to load from localStorage if API fails
+  const serverAvailable = await checkServerConnection()
+  if (serverAvailable) {
+    await loadProfile()
+  } else {
+    // Try to load from local storage as fallback
+    const localProfile = localStorage.getItem('userProfile')
+    if (localProfile) {
+      Object.assign(form, JSON.parse(localProfile))
+      form.consent = true
+      statusMessage.value = 'Loaded from local storage. Changes may not be saved to server.'
+      statusType.value = 'warning'
+    }
+  }
+})
+</script>
+
+<style scoped>
+@keyframes fadeSlideUp {
+  from { opacity: 0; transform: translateY(30px); }
+  to   { opacity: 1; transform: translateY(0);   }
+}
+.fade-slide-up { 
+  opacity: 0; 
+  animation: fadeSlideUp 0.8s ease-out forwards; 
+}
+.fade-slide-up.delay-150 { animation-delay: 0.15s; }
+.fade-slide-up.delay-300 { animation-delay: 0.3s; }
+.fade-slide-up.delay-450 { animation-delay: 0.45s; }
+
+/* Button and input focus states */
+button:focus, input:focus, select:focus {
+  outline: none;
+}
+</style>

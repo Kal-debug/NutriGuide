@@ -1,0 +1,154 @@
+<template>
+  <div class="max-w-3xl w-full mx-auto bg-white dark:bg-gray-800 p-8 rounded-lg shadow fade-slide-up">
+    <div class="flex justify-between items-center mb-6">
+      <h2 class="text-2xl font-bold text-gray-900 dark:text-white">Profile Summary</h2>
+      <button
+        @click="$emit('edit')"
+        class="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded transition">
+        Edit
+      </button>
+    </div>
+
+    <div class="grid grid-cols-3 gap-6 text-gray-900 dark:text-gray-100 mb-8">
+      <div><span class="font-semibold">Age:</span> {{ profile.age }} yrs</div>
+      <div><span class="font-semibold">Sex:</span> {{ capitalize(profile.sex) }}</div>
+      <div><span class="font-semibold">Height:</span> {{ profile.height_cm }} cm</div>
+      <div><span class="font-semibold">Weight:</span> {{ profile.weight_kg }} kg</div>
+      <div><span class="font-semibold">Activity:</span> {{ formatActivity(profile.activity_level) }}</div>
+      <div><span class="font-semibold">Goal:</span> {{ capitalize(profile.goal) }}</div>
+    </div>
+
+    <div class="flex justify-center">
+      <BMIWidget :height="profile.height_cm" :weight="profile.weight_kg" />
+    </div>
+  </div>
+</template>
+
+<script setup>
+import { defineProps, defineEmits } from 'vue'
+import BMIWidget from './BMIWidget.vue'
+
+const props = defineProps({ profile: Object })
+const emit  = defineEmits(['edit'])
+
+const capitalize = s => s.charAt(0).toUpperCase() + s.slice(1)
+const formatActivity = lvl => ({
+  sedentary:    'Sedentary',
+  light:        'Lightly active',
+  moderate:     'Moderately active',
+  active:       'Very active',
+  veryActive:   'Extremely active'
+}[lvl] || capitalize(lvl))
+</script>
+
+<style scoped>
+/* reuse global fade-slide-up */
+</style>
+
+
+// src/views/Profile.vue (or wherever your profile page lives)
+<template>
+  <div
+    class="min-h-screen flex
+           bg-gray-50 dark:bg-gray-900
+           transition-colors duration-300"
+  >
+    <!-- SIDEBAR -->
+    <aside class="w-56 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 p-6 shadow-lg flex flex-col">
+      <!-- ...sidebar content unchanged... -->
+    </aside>
+
+    <main class="flex-1 p-8">
+      <h1 class="text-3xl font-bold mb-6 text-gray-900 dark:text-white fade-slide-up">
+        My Profile
+      </h1>
+
+      <!-- SUMMARY VIEW -->
+      <SummaryProfile
+        v-if="showSummary"
+        :profile="form"
+        @edit="showSummary = false"
+      />
+
+      <!-- EDIT FORM -->
+      <form
+        v-else
+        @submit.prevent="onSubmit"
+        class="max-w-md mx-auto space-y-6"
+      >
+        <!-- ...all your existing fields, toggles, buttons unchanged... -->
+      </form>
+    </main>
+  </div>
+</template>
+
+<script setup>
+import { reactive, ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+import axios from 'axios'
+import { calculateNutritionTargets } from '../utils/nutritionCalculator'
+import SummaryProfile from '../components/SummaryProfile.vue'
+
+/** Dark-mode logic **/
+// ...same as before...
+
+/** Router & Auth **/
+// ...same as before...
+
+/** Form state **/
+const form = reactive({
+  age: null,
+  sex: 'male',
+  height_cm: null,
+  weight_kg: null,
+  body_fat_pct: null,
+  rhr_bpm: null,
+  activity_level: 'moderate',
+  goal: 'maintain',
+  consent: false
+})
+const showAdv = ref(false)
+const isSubmitting = ref(false)
+const statusMessage = ref('')
+const statusType = ref('error')
+
+// ** NEW: summary toggle **
+const showSummary = ref(false)
+
+// ... calculation state, onSubmit, checkServerConnection, etc. unchanged ...
+
+// Load existing profile, then show summary if data exists
+async function loadProfile() {
+  try {
+    const { data } = await axios.get('http://localhost:3000/profile', hdrs)
+    if (data && Object.keys(data).length) {
+      Object.assign(form, data)
+      form.consent = true
+      showSummary.value = true
+    }
+  } catch (err) {
+    // ...error handling as before...
+  }
+}
+
+onMounted(async () => {
+  initDarkMode()
+  const serverAvailable = await checkServerConnection()
+  if (serverAvailable) {
+    await loadProfile()
+  } else {
+    const localProfile = localStorage.getItem('userProfile')
+    if (localProfile) {
+      Object.assign(form, JSON.parse(localProfile))
+      form.consent = true
+      showSummary.value = true
+      statusMessage.value = 'Loaded from local storage. Changes may not be saved to server.'
+      statusType.value = 'warning'
+    }
+  }
+})
+</script>
+
+<style scoped>
+/* existing animations & focus styles unchanged */
+</style>
