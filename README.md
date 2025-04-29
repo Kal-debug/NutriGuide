@@ -1,8 +1,8 @@
-# NutriTrack – Full-Stack Nutrition Tracker 🥗
+# NutriTrack – Full-Stack Nutrition Tracker 
 
 Log meals, track macros, and smash your nutrition goals—right from the browser.
 
-![NutriTrack dashboard screenshot](docs/screenshots/dashboard.png)
+![Logo](src/images/nutrilogo.png)
 
 ---
 
