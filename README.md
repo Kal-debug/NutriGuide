@@ -1,4 +1,4 @@
-# NutriTrack – Full-Stack Nutrition Tracker 
+# NutriGuide – Full-Stack Nutrition Tracker 
 
 Log meals, track macros, and smash your nutrition goals—right from the browser.
 
