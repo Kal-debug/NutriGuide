@@ -123,7 +123,7 @@ POST   /profile           # create/update profile
 4. Open a Pull Request and describe your changes
 
 ## License
-Distributed under the **MIT License**. See `LICENSE` for more information.
+Distributed under the **GSU License**. See `LICENSE` for more information.
 
 ---
 
